@@ -15,7 +15,7 @@ A. Encoding Videos
 
 B. Minimum Hardware
 1. A Raspberry Pi of sorts
-2. Some kind of screen, preferably the 2.8 in screen that has a way to short PWM and GPIO 18
+2. Some kind of screen, preferably the 2.8 in screen that has a way to short PWM and GPIO 18. For ease, I recommend the 2.8 inch monitor with breakout pins for easy access to ground and 3.3V and GPIO25.
 3. An SD card
 4. A USB-C/Micro USB female to breakout board
 5. A Micro USB male connector
