@@ -1,3 +1,5 @@
-These python scripts are used to make the Desktop Simpsons TV work.
+A modified version of the Simpsons TV with the following modifications:
 
-You can find a complete build guide [here](https://withrow.io/simpsons-tv-build-guide)
+1. External USB port
+2. External HDMI port
+3. A switch to toggle between playing a certain folder to be played, all folders to be played
