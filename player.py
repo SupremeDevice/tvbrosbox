@@ -1,7 +1,11 @@
 import os
 import random
 import time
+import RPi.GPIO as GPIO
 from subprocess import PIPE, Popen, STDOUT
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(25, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'videos')
 
