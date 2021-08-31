@@ -4,8 +4,7 @@ A modified version of the Simpsons TV with the following modifications:
 2. External HDMI port
 3. A switch to toggle between playing a certain folder or all folders (need restart)
 4. Supports sub folders in playback
-5. Supports sub folders in encoding
-6. Encoded video audio is normalized
+5. Encoded video audio is normalized and forced to 640x480 as some scaling can cause the ffmpeg to fail
 
 Requirements:
 A. Encoding Videos
