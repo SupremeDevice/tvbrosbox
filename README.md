@@ -6,10 +6,10 @@ To do:
 
 Things I hate:
 1. Looks ugly
-2. Sound quality is pretty bad even after adjusting a lot of settings. Thankfully earphones still work. I would look for better speakers and amplifier than the one the original author propsoed
-3. It needs a really good power supply. I currently use 2 USB-C inputs to micro-usb (1 for pi and the display) and I get the lightning bolt a lot if sound is on. 2.8 doesn't experience this issue since it's not as finicky and USB devices work better as it is directly connected to the PSU.
+2. Sound quality is pretty bad even after adjusting a lot of settings. Thankfully earphones still work. I would look for better speakers and amplifier than the one the original author proposed
+3. It needs a really good power supply. I currently use 2 USB-C inputs to micro-usb (1 for pi and the display) and I get the lightning bolt a lot if sound is on. 2.8 doesn't experience this issue since pi zero's not as finicky and USB devices work better as it is directly connected to the PSU.
 4. Can't put blanking on before omxplayer appears because it breaks the HDMI on the 7 inch for some reason
-5. Power-off of the lcd was supposed to be done through a relay but my design didn't work with the relay I used. Thankfully the lcd turns off automatically and quickly if there is no signal albeit a blue screen briefly appears 
+5. Power-off of the lcd was supposed to be done through a relay but my design didn't work with the relay I used or the relay was defective. Thankfully the lcd turns off automatically and quickly if there is no signal albeit a blue screen briefly appears 
 
 Comments:
 1. The 2.8 inch version looks cute but the viewing angle is really bad. The 7 inch is much worse despite it being allegedly IPS.
@@ -17,6 +17,7 @@ Comments:
 3. External USB is not very stable either as the pi restarts if a USB device is connected
 4. The original author didn't bother discussing making the OS read only
 5. If I were to make this again, probably combine what I learned from the 2.8 and 7 inch. Probably make the 2.8 inch longer as adding external USB and HDMI makes it harder to stay closed and it's very brittle, so maybe additional support for the hdmi and usb are needed. I will also add an hdmi switch to make things easier.
+6. 2.8 inch 3d print should have wider holes for the knob and power button. I ended up not putting the knob on the volume and power switch since the normal potentiometer doesn't fit and the print was too tight and iffy after filing sanding.
 
 A modified version of the Simpsons TV with the following modifications:
 
