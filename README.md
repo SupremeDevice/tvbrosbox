@@ -1,4 +1,8 @@
-This project is completed.
+This project is mostly completed. 
+
+To do:
+1. Add code to support incerasing the volume for commentary tracks if they're playing.
+2. Automatically restart Pi if user switches between LCD or external screen
 
 Things I hate:
 1. Looks ugly
@@ -16,7 +20,7 @@ A modified version of the Simpsons TV with the following modifications:
 8. Support for USB drives
 9. Support for using LCD or a different screen
 10. Supports mode to play Simpsons only content
-11. Supports playing of Simpsons commentary while in Simpsons mode (Issue is if commentary is weaker in volume and omxplayer can't adjust gain on the fly)
+11. Supports playing of Simpsons commentary while in Simpsons mode (Issue is if commentary is weaker in volume and omxplayer can't adjust gain on the fly). Can be used to swap between audio tracks
 
 Requirements:
 A. Encoding Videos
