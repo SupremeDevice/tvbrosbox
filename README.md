@@ -7,6 +7,8 @@ A modified version of the Simpsons TV with the following modifications:
 5. Supports sub folders in playback
 6. Seamless playing of videos between files
 7. Loading from multiple USB drives
+8. Support for USB drives
+9. Support for using LCD or a different screen
 
 Requirements:
 A. Encoding Videos
