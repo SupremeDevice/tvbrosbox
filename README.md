@@ -1,3 +1,9 @@
+This project is completed.
+
+Things I hate:
+1. Looks ugly
+2. Sound quality is pretty bad even after adjust a lot of settings. Thankfully earphones still work
+
 A modified version of the Simpsons TV with the following modifications:
 
 1. Will not need 3d printing at all
@@ -9,6 +15,8 @@ A modified version of the Simpsons TV with the following modifications:
 7. Loading from multiple USB drives
 8. Support for USB drives
 9. Support for using LCD or a different screen
+10. Supports mode to play Simpsons only content
+11. Supports playing of Simpsons commentary while in Simpsons mode (Issue is if commentary is weaker in volume and omxplayer can't adjust gain on the fly)
 
 Requirements:
 A. Encoding Videos
