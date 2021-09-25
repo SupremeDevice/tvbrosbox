@@ -6,7 +6,7 @@ To do:
 
 Things I hate:
 1. Looks ugly
-2. Sound quality is pretty bad even after adjust a lot of settings. Thankfully earphones still work
+2. Sound quality is pretty bad even after adjust a lot of settings. Thankfully earphones still work. I would look for better speakers and amplifier than the one the original author propsoed
 
 A modified version of the Simpsons TV with the following modifications:
 
