@@ -33,6 +33,9 @@ A modified version of the Simpsons TV with the following modifications:
 10. Supports mode to play Simpsons only content
 11. Supports playing of Simpsons commentary while in Simpsons mode (Issue is if commentary is weaker in volume and omxplayer can't adjust gain on the fly). Can be used to swap between audio tracks
 12. Can skip to the next video via button press
+13. Can skip by 15 seconds at a time by long button press
+14. Can skip based on time through command line
+15. Can skip to next track through command line
 
 Requirements:
 A. Encoding Videos
