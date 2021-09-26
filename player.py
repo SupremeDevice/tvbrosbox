@@ -112,6 +112,8 @@ def playVideos():
 	global stopPlayer
 	global isWide
 	global isLetterbox
+	global isCommentary
+	global isSimpsons
 	curIndex = 0
 	vLength = 0
 	global player
@@ -134,6 +136,13 @@ def playVideos():
 			player = OMXPlayer(video,args='--no-osd --aspect-mode stretch')
 		else: #zoom
 			player = OMXPlayer(video,args='--no-osd --aspect-mode fill')
+		if isSimpsons and isCommentary:
+			player.set_volume(2.5)
+			player.select_audio(2)
+
+		else:
+			player.set_volume(1.25)
+
 		endWait(vLength - 6)
 		curIndex += 1
 		if stopPlayer:
@@ -196,7 +205,7 @@ def checkSimpsons():
 	if input != isSimpsons:
 		isSimpsons = input
 		if initDone:
-			print("isSimpsons changed to ", isSimpsons)
+			#print("isSimpsons changed to ", isSimpsons)
 			getVideos()  
 			stopPlayer = True
 
@@ -204,17 +213,25 @@ def checkCommentary():
 	global isCommentary
 	global player
 	global isSimpsons
+	global initDone
 	input = GPIO.input(16)
-	if isSimpsons:
-		if input != isCommentary:
-			print("Commentary is ",input)
+	#print("Commentary is ",isSimpsons, input)
+
+	#print("isSimpsons is ",isSimpsons)
+
+	if isSimpsons or initDone == False:
+		if input != isCommentary or initDone == False:
+			#print("Commentary is ",input)
 			isCommentary = input
 			if initDone:
 				if player is not None:
 					if input:
 						player.select_audio(2)
+						player.set_volume(2.5)
 					else:
 						player.select_audio(0)
+						player.set_volume(1.25)
+
 
 def checkLetterBox():
 	global isLetterBox
@@ -227,7 +244,7 @@ def checkLetterBox():
 			if input:
 				#print("Set to letterbox")
 				player.set_aspect_mode('letterbox')
-			#else should be handled by checkwide
+			#else should be handled by 4de
 			else:
 				checkWide(True)
 
@@ -236,7 +253,7 @@ def checkWide(isForced):
 	global isLetterBox
 	global player
 	input = GPIO.input(27) # Wide = Stretched
-	if isWide != input or isForced:
+	if (isWide != input and isLetterBox == False) or isForced == True:
 		print("isWide is now ", isWide)
 		isWide = input
 		if player is not None:
@@ -302,7 +319,7 @@ def checkScreenOn():
 
 		if not isLCD:
 			if hdmiFileExists:
-				print("External is connected and file is present")
+				Print("External is connected and file is present")
 			else:
 				os.system('sudo touch /boot/hdmiFlag')
 				os.system('sudo cp -f /boot/hdmi/config.txt /boot/config.txt')
