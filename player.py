@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from multiprocessing import Process, Lock
 import RPi.GPIO as GPIO
 import os
 import random
@@ -13,7 +14,7 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(16, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
+firstT = None
 GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -21,7 +22,7 @@ GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 initDone = False
 isLCD = True
 directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'videos')
-
+origTimeLeft = 0
 directorySimpsons = os.path.join(directory, 'Simpsons')
 videos = []
 curFile = ""
@@ -39,6 +40,8 @@ screenChanged = False #if screen mode changed
 stopPlayer = False
 mountPaths = ['/mnt/usb1','/mnt/usb2','/mnt/usb3','/mnt/usb4','/mnt/usb5','/mnt/usb6','/mnt/usb7','/mnt/usb8']
 adjustedTime = 0
+overlapTime = 2
+mutex = Lock()
 def getVideos():
 	global directory
 	global directorySimpsons
@@ -61,10 +64,7 @@ def getVideos():
 		for i in mountPaths:
 			dirPath = os.path.join(i, "")
 			dirPath = os.path.join(dirPath, 'videos')
-	
 			#print("alternate i ", dirPath)
-
-	
 			for currentpath, folders, files in os.walk(dirPath):
 				for file in files:
 					if os.path.join(currentpath, file).lower().endswith('.mp4'):
@@ -73,27 +73,37 @@ def getVideos():
 						videos.append(os.path.join(currentpath, file))
 
 def endWait(length):
+	global player
+	global mutex
 	global stopPlayer
 	forced = False
 	global timeLeft
 	timeLeft = int(length)
-	origTimeLeft = 0
+	global origTimeLeft
+	origTimeLeft = length
+	global firstT
 	firstT = datetime.now()
 	lastT = datetime.now()
 	delta = lastT - firstT
 	stopped = False
 	global adjustedTime
 	adjustedTime = 0
-	tLeft = delta.seconds
+	timeLeft = origTimeLeft - delta.seconds
 	global curFile
-	tempCmd = 'echo ' + curFile + '> /tmp/curFile'
+	tempCmd = "echo \"" + curFile + "\"> /tmp/curFile"
 	os.system(tempCmd)			
 
-	while tLeft < timeLeft and forced == False:
+	while timeLeft > 0 and forced == False:
 		time.sleep(1)
 		lastT = datetime.now()
 		delta = lastT - firstT
-		tLeft = delta.seconds - adjustedTime
+		timeLeft = origTimeLeft - (delta.seconds + adjustedTime)
+		tempCmd = "echo \"" + str(timeLeft) + "\"> /tmp/timeLeft"
+		os.system(tempCmd)			
+
+		tempCmd = "echo \"" + str(adjustedTime) + "\"> /tmp/timeAdjusted"
+		os.system(tempCmd)			
+		
 		tempCmd = 'sudo ps -ux| grep omxplayer.bin'
 		#check if omxplayer is still running
 		try:
@@ -113,9 +123,13 @@ def endWait(length):
 			os.system('sudo rm /tmp/skipFile')
 			forced = True
 			skipFileExists = False
+			mutex.acquire()
 			if player is not None:
 				player.quit()
-
+				print("Skip file set player to None")
+				player = None
+				stopPlayer = True
+			mutex.release()
 		if stopPlayer:
 			#print("stopPlayer detected")
 			forced = True
@@ -133,6 +147,8 @@ def playVideos():
 	curIndex = 0
 	vLength = 0
 	global player
+	global mutex
+	global overlapTime
 	rng = random.SystemRandom()
 	seedV = rng.randint(0, 65535)
 	random.seed(seedV)
@@ -151,29 +167,39 @@ def playVideos():
 		value =  check_output(tempCmd, shell=True)
 		vLength = int(float(value))
 		nextHeldCnt = 0
+		mutex.acquire()
+		if player is not None:
+			player.quit()
+			player = None
+
 		if isLetterBox:
 			player = OMXPlayer(video,args='--no-osd --aspect-mode Letterbox')
 		elif isWide:
 			player = OMXPlayer(video,args='--no-osd --aspect-mode stretch')
 		else: #zoom
 			player = OMXPlayer(video,args='--no-osd --aspect-mode fill')
+		print("Normal set player after opening")
 		if isSimpsons and isCommentary:
 			player.set_volume(2.5)
 			player.select_audio(2)
-
 		else:
 			player.set_volume(1.25)
-		endWait(vLength - 6)
+		if player is None:
+			print("WTF! player is none!")
+		mutex.release()
+		endWait(vLength - overlapTime)
 		curIndex = curIndex + 1
 		if stopPlayer:
 			stopPlayer = False
+			mutex.acquire()
 			if player is not None:
 				player.quit()
+				print("Stop player set player to None")
 				player = None
-			#curIndex = len(videos) + 1
+			mutex.release()
 			if length != len(videos): #changed mode
 				length = len(videos)
-				curIndex = length+1
+				curIndex = length+1 #force to next file
 			
 def setup():
 	devPaths = ['/dev/sda','/dev/sdb','/dev/sdc','/dev/sdd','/dev/sda1','/dev/sdb1','/dev/sdc1','/dev/sdd1',]
@@ -233,6 +259,7 @@ def checkSimpsons():
 def checkCommentary():
 	global isCommentary
 	global player
+	global mutex
 	global isSimpsons
 	global initDone
 	input = GPIO.input(16)
@@ -245,6 +272,7 @@ def checkCommentary():
 			#print("Commentary is ",input)
 			isCommentary = input
 			if initDone:
+				mutex.acquire()
 				if player is not None:
 					if input:
 						player.select_audio(2)
@@ -252,14 +280,16 @@ def checkCommentary():
 					else:
 						player.select_audio(0)
 						player.set_volume(1.25)
-
+				mutex.release()
 
 def checkLetterBox():
 	global isLetterBox
 	global player
+	global mutex
 	input = GPIO.input(17)
 	if input != isLetterBox:
 		isLetterBox = input
+		mutex.acquire()
 		#print("is isLetterBox ", isLetterBox, player)
 		if player is not None:
 			if input:
@@ -267,21 +297,32 @@ def checkLetterBox():
 				player.set_aspect_mode('letterbox')
 			#else should be handled by 4de
 			else:
+				mutex.release()
 				checkWide(True)
+				mutex.acquire()
+		else:
+			print("letter box player is none!")
+		mutex.release()
+
 
 def checkWide(isForced):
 	global isWide
 	global isLetterBox
 	global player
+	global mutex
 	input = GPIO.input(27) # Wide = Stretched
 	if (isWide != input and isLetterBox == False) or isForced == True:
-		print("isWide is now ", isWide)
+		#print("isWide is now ", isWide)
 		isWide = input
+		mutex.acquire()
 		if player is not None:
 			if input:
 				player.set_aspect_mode('stretch')
 			else:
 				player.set_aspect_mode('fill')
+		else:
+			print("wide player is none!")
+		mutex.release()
 
 def checkMute():
 	global isMute
@@ -308,7 +349,7 @@ def turnOnScreen():
 		os.system('raspi-gpio set 19 op a5')
 	
 def ReadOnly(val):
-	cmd = ''
+	cmd = ""
 	if val:
 		cmd = 'sudo mount -o remount,ro / ; sudo mount -o remount,ro /boot'
 	else:
@@ -340,7 +381,7 @@ def checkScreenOn():
 
 		if not isLCD:
 			if hdmiFileExists:
-				Print("External is connected and file is present")
+				print("External is connected and file is present")
 			else:
 				os.system('sudo touch /boot/hdmiFlag')
 				os.system('sudo cp -f /boot/hdmi/config.txt /boot/config.txt')
@@ -360,30 +401,56 @@ def checkScreenOn():
 			turnOnScreen()
 		else:
 			os.system('raspi-gpio set 19 ip')			
-			os.system('tvservice -o')
+			if isLCD: #turn we'll only support turning off for the LCD
+				os.system('tvservice -o')
 
 def checkNext():
 	global stopPlayer
 	global initDone
 	global player
+	global mutex
 	global adjustedTime
 	input = not GPIO.input(6)
 	global nextHeldCnt
+	global overlapTime
+	global firstT
 	compute = 0
 	if initDone:
+
 		if input:
 			nextHeldCnt = nextHeldCnt + 1
 			computeLeft = nextHeldCnt % 5
+			mutex.acquire()
 			if nextHeldCnt > 15 and player is not None: #if 3 seconds have occurred and button is still pressed
-				if timeLeft > 21 and computeLeft == 0:
+				if timeLeft > 15 + overlapTime and computeLeft == 0:
 					player.seek(15)
+					print("Skipping by 15 seconds")
+
 					adjustedTime = adjustedTime + 15
+			mutex.release()
 		else:
 			if nextHeldCnt > 0 and nextHeldCnt < 15: #normal skip
 				stopPlayer = True
 			nextHeldCnt = 0
+		
+		forwardFileExists = exists('/tmp/forwardFlag')
+		if forwardFileExists:
+			print("Forward flag check", forwardFileExists)
 
-
+			print("Forward Exist")
+			f = open("/tmp/forwardFlag","rt")
+			skipLen = f.readline()
+			try:
+				timeLen = int (skipLen)
+			except:
+				timeLen = 15
+			os.system('rm -rf /tmp/forwardFlag')
+			if timeLeft > timeLen + overlapTime and player is not None:
+				mutex.acquire()
+				print("Skipping by " + str(timeLen) + " seconds")
+				player.seek(timeLen)
+				mutex.release()
+				adjustedTime = adjustedTime + timeLen
 checkScreenOn()
 setup()
 while (True):
