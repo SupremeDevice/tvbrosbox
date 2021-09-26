@@ -24,6 +24,7 @@ directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'videos')
 
 directorySimpsons = os.path.join(directory, 'Simpsons')
 videos = []
+curFile = ""
 player = None
 isScreenOn = True
 isMute = False
@@ -84,12 +85,16 @@ def endWait(length):
 	global adjustedTime
 	adjustedTime = 0
 	tLeft = delta.seconds
+	global curFile
+	tempCmd = 'echo ' + curFile + '> /tmp/curFile'
+	os.system(tempCmd)			
+
 	while tLeft < timeLeft and forced == False:
 		time.sleep(1)
 		lastT = datetime.now()
 		delta = lastT - firstT
 		tLeft = delta.seconds - adjustedTime
-		tempCmd = 'sudo ps -aux| grep omxplayer.bin'
+		tempCmd = 'sudo ps -ux| grep omxplayer.bin'
 		#check if omxplayer is still running
 		try:
 			value = check_output(tempCmd, shell=True)
@@ -103,11 +108,20 @@ def endWait(length):
 			if len(value) < 10:
 				origTimeLeft = timeLeft
 				forced = True
+		skipFileExists = exists('/tmp/skipFile')
+		if skipFileExists:
+			os.system('sudo rm /tmp/skipFile')
+			forced = True
+			skipFileExists = False
+			if player is not None:
+				player.quit()
+
 		if stopPlayer:
 			#print("stopPlayer detected")
 			forced = True
 
 def playVideos():
+	global curFile
 	global videos
 	global curIndex
 	global stopPlayer
@@ -130,6 +144,7 @@ def playVideos():
 	length = len(videos)
 	while curIndex < len(videos):
 		video = videos[curIndex]
+		curFile = video
 		#print("video is ", video)
 		#print("stopPlayer is ", stopPlayer)
 		tempCmd = 'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "%s"' % video
@@ -148,7 +163,6 @@ def playVideos():
 
 		else:
 			player.set_volume(1.25)
-
 		endWait(vLength - 6)
 		curIndex = curIndex + 1
 		if stopPlayer:
