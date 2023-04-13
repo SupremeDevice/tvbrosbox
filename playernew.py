@@ -96,6 +96,7 @@ def playVideos():
     video = videos[video_pointer]
     if(playNew == True):
         player=OMXPlayer(video)
+        player.set_aspect_mode('stretch')	
         player.exitEvent = lambda _, exit_code: autoPlayNext(exit_code) #Set OMXPlayer exit event handler to call the
                                                                      # autoPlayNext() routine when OMXPlayer exits
         playNew = False                #Reset the playNew flag
